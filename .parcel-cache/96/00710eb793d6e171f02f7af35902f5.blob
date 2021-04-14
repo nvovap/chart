@@ -1,0 +1,5 @@
+require('./styles.scss');
+var _data = require('./data');
+var _chart = require('./chart');
+const toChart = _chart.chart(document.getElementById("chart"), _data.getChartData());
+toChart.init();

@@ -1,0 +1,43 @@
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+_parcelHelpers.export(exports, "toDate", function () {
+  return toDate;
+});
+_parcelHelpers.export(exports, "isOver", function () {
+  return isOver;
+});
+_parcelHelpers.export(exports, "toCoords", function () {
+  return toCoords;
+});
+_parcelHelpers.export(exports, "computeBounderies", function () {
+  return computeBounderies;
+});
+function toDate(timestamp) {
+  const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const date = new Date(timestamp);
+  return `${shortMonths[date.getMonth()]} ${date.getDate()}`;
+}
+function isOver(mouse, x, lenhth, DPI_WIDTH) {
+  if (!mouse) return false;
+  const width = DPI_WIDTH / lenhth;
+  return Math.abs(x - mouse.x) < width / 2;
+}
+function toCoords(xRatio, yRatio, DPI_HEIGHT) {
+  return col => col.filter((_, i) => i !== 0).map((y, i) => [Math.floor(i * xRatio), Math.floor(DPI_HEIGHT - PADDING - y * yRatio)]);
+}
+function computeBounderies({columns, types}) {
+  let min;
+  let max;
+  columns.forEach(col => {
+    if (types[col[0]] !== 'line') return;
+    if (typeof min !== 'number') min = col[1];
+    if (typeof max !== 'number') max = col[1];
+    if (min > col[1]) min = col[1];
+    if (max < col[1]) max = col[1];
+    for (let i = 2; i < col.length; i++) {
+      if (min > col[i]) min = col[i];
+      if (max < col[i]) max = col[i];
+    }
+  });
+  return [min, max];
+}

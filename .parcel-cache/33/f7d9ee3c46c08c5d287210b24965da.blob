@@ -1,0 +1,37 @@
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+_parcelHelpers.export(exports, "tooltip", function () {
+  return tooltip;
+});
+var _utils = require('./utils');
+const template = data => `
+<div class="tooltip-title">${data.title}</div>
+<ul class="tooltip-list">
+  ${data.items.map(item => {
+  return `<li class="tooltip-list-item">
+      <div class="value" style="color: ${item.color}">${item.value}</div>
+      <div class="name" style="color: ${item.color}">${item.name}</div>
+    </li>`;
+}).join(' ')}
+</ul>
+`;
+function tooltip(el) {
+  const clear = () => el.innertHTML = '';
+  return {
+    show({left, top}, data) {
+      const {height, width} = el.getClientBoundingRect();
+      clear();
+      _utils.css(el, {
+        display: 'block',
+        top: top - height + 'px',
+        left: left + width + 'px'
+      });
+      el.insertAdjacentHtml('afterbegin', template(data));
+    },
+    hide() {
+      _utils.css(el, {
+        display: 'none'
+      });
+    }
+  };
+}

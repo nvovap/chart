@@ -1,0 +1,119 @@
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+_parcelHelpers.export(exports, "toDate", function () {
+  return toDate;
+});
+_parcelHelpers.export(exports, "xAxis", function () {
+  return xAxis;
+});
+_parcelHelpers.export(exports, "yAxis", function () {
+  return yAxis;
+});
+_parcelHelpers.export(exports, "circle", function () {
+  return circle;
+});
+_parcelHelpers.export(exports, "line", function () {
+  return line;
+});
+_parcelHelpers.export(exports, "isOver", function () {
+  return isOver;
+});
+_parcelHelpers.export(exports, "toCoords", function () {
+  return toCoords;
+});
+_parcelHelpers.export(exports, "computeBounderies", function () {
+  return computeBounderies;
+});
+const CIRCLE_RADIUS = 10;
+const ROWS_COUNT = 5;
+function toDate(timestamp) {
+  const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const date = new Date(timestamp);
+  return `${shortMonths[date.getMonth()]} ${date.getDate()}`;
+}
+function xAxis(ctx, data, xRatio, {mouse}) {
+  const colsCount = 10;
+  const step = Math.round(data.length / colsCount);
+  ctx.beginPath();
+  ctx.font = 'normal 20px Helvetica, sans-serif';
+  ctx.fillStyle = '#96a2aa';
+  for (let i = 1; i < data.length; i++) {
+    const pos_x = xRatio * i;
+    if ((i - 1) % step == 0) {
+      const xText = toDate(data[i]);
+      ctx.fillText(xText, pos_x, DPI_HEIGHT - 10);
+    }
+    if (isOver(mouse, pos_x, data.length)) {
+      console.log(`over x = ${pos_x}`);
+      ctx.save();
+      // ctx.strokeStyle = '#96a2aa'
+      ctx.moveTo(pos_x, PADDING);
+      ctx.lineTo(pos_x, DPI_HEIGHT - PADDING);
+      ctx.restore();
+    }
+  }
+  ctx.stroke();
+  ctx.closePath();
+}
+function yAxis(ctx, yMin, yMax) {
+  const step = VIEW_HEIGHT / ROWS_COUNT;
+  const stepText = Math.round((yMax - yMin) / ROWS_COUNT);
+  ctx.beginPath();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#bbb';
+  ctx.font = 'normal 20px Helvetica, sans-serif';
+  ctx.fillStyle = '#96a2aa';
+  for (let i = 1; i <= ROWS_COUNT; i++) {
+    const y = step * i;
+    const yText = yMax - stepText * i;
+    const pos_y = y + PADDING;
+    ctx.fillText(yText, 0, pos_y - 10);
+    ctx.moveTo(0, pos_y);
+    ctx.lineTo(DPI_WIDTH, pos_y);
+  }
+  ctx.stroke();
+  ctx.closePath();
+}
+function circle(ctx, [x, y], color) {
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = '#fff';
+  ctx.arc(x, y, CIRCLE_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.closePath();
+}
+function line(ctx, coords, {color}) {
+  ctx.beginPath();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = color;
+  for ([x, y] of coords) {
+    ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.closePath();
+}
+function isOver(mouse, x, lenhth) {
+  if (!mouse) return false;
+  const width = DPI_WIDTH / lenhth;
+  return Math.abs(x - mouse.x) < width / 2;
+}
+function toCoords(xRatio, yRatio) {
+  return col => col.filter((_, i) => i !== 0).map((y, i) => [Math.floor(i * xRatio), Math.floor(DPI_HEIGHT - PADDING - y * yRatio)]);
+}
+function computeBounderies({columns, types}) {
+  let min;
+  let max;
+  columns.forEach(col => {
+    if (types[col[0]] !== 'line') return;
+    if (typeof min !== 'number') min = col[1];
+    if (typeof max !== 'number') max = col[1];
+    if (min > col[1]) min = col[1];
+    if (max < col[1]) max = col[1];
+    for (let i = 2; i < col.length; i++) {
+      if (min > col[i]) min = col[i];
+      if (max < col[i]) max = col[i];
+    }
+  });
+  return [min, max];
+}

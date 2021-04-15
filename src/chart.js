@@ -21,7 +21,7 @@ export function chart(root, data) {
   const tip = tooltip(root.querySelector('[data-el="tooltip"]'))
   const ctx = canvas.getContext("2d");
 
-  canvas.style.width  = WIDTH  + 'px'
+  canvas.style.width = WIDTH + 'px'
   canvas.style.height = HEIGHT + 'px'
 
   css(canvas, {
@@ -38,6 +38,7 @@ export function chart(root, data) {
 
   function mouseleave() {
     proxy.mouse = null
+    tip.hide()
   }
 
 
@@ -54,8 +55,8 @@ export function chart(root, data) {
     proxy.mouse = {
       x: (clientX - left) * 2,
       tooltip: {
-          left: clientX - left,
-          top:  clientY - top,
+        left: clientX - left,
+        top: clientY - top,
       },
     }
   }
@@ -76,7 +77,7 @@ export function chart(root, data) {
 
     // Painting
     yAxis(yMin, yMax)
-    xAxis(xData, xRatio)
+    xAxis(xData, yData, xRatio)
 
     yData.map(toCoords(xRatio, yRatio)).forEach((coords, indx) => {
       const name = yData[indx][0];
@@ -99,24 +100,23 @@ export function chart(root, data) {
     ])
   }
 
-  function xAxis(data, xRatio) {
+  function xAxis(xData, yData, xRatio) {
     const colsCount = 10
-    const step = Math.round(data.length / colsCount)
+    const step = Math.round(xData.length / colsCount)
 
     ctx.beginPath()
     ctx.font = 'normal 20px Helvetica, sans-serif'
     ctx.fillStyle = '#96a2aa'
 
-    for (let i = 1; i < data.length; i++) {
+    for (let i = 1; i < xData.length; i++) {
 
       const pos_x = xRatio * i
       if ((i - 1) % step == 0) {
-        const xText = toDate(data[i])
+        const xText = toDate(xData[i])
         ctx.fillText(xText, pos_x, DPI_HEIGHT - 10)
       }
 
-      if (isOver(proxy.mouse, pos_x, data.length, DPI_WIDTH)) {
-        console.log(`over x = ${pos_x}`)
+      if (isOver(proxy.mouse, pos_x, xData.length, DPI_WIDTH)) {
         ctx.save()
         // ctx.strokeStyle = '#96a2aa'
         ctx.moveTo(pos_x, PADDING)
@@ -125,8 +125,13 @@ export function chart(root, data) {
 
 
         tip.show(proxy.mouse.tooltip, {
-            title: toDate(data[i]),
-            items: []
+          title: toDate(xData[i]),
+          items: yData.map(col => { return {
+            color : data.colors[col[0]],
+            name:  data.names[col[0]],
+            value: col[i+1],
+          }}),
+                   
         })
       }
     }
@@ -137,9 +142,9 @@ export function chart(root, data) {
   function yAxis(yMin, yMax) {
 
     const step = VIEW_HEIGHT / ROWS_COUNT
-  
+
     const stepText = Math.round((yMax - yMin) / ROWS_COUNT)
-  
+
     ctx.beginPath()
     ctx.lineWidth = 1
     ctx.strokeStyle = '#bbb'
@@ -152,11 +157,11 @@ export function chart(root, data) {
       ctx.fillText(yText, 0, pos_y - 10)
       ctx.moveTo(0, pos_y)
       ctx.lineTo(DPI_WIDTH, pos_y)
-  
+
     }
     ctx.stroke()
     ctx.closePath()
-  
+
   }
 
 

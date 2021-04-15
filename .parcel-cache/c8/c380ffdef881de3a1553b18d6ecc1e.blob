@@ -579,7 +579,7 @@ function chart(root, data) {
     yData = data.columns.filter(col => data.types[col[0]] === 'line');
     // Painting
     yAxis(yMin, yMax);
-    xAxis(xData, yData, xRatio);
+    xAxis(xData, xRatio);
     yData.map(toCoords(xRatio, yRatio)).forEach((coords, indx) => {
       const name = yData[indx][0];
       const color = data.colors[name];
@@ -606,24 +606,19 @@ function chart(root, data) {
     for (let i = 1; i < xData.length; i++) {
       const pos_x = xRatio * i;
       if ((i - 1) % step == 0) {
-        const xText = _utils.toDate(xData[i]);
+        const xText = _utils.toDate(data[i]);
         ctx.fillText(xText, pos_x, DPI_HEIGHT - 10);
       }
-      if (_utils.isOver(proxy.mouse, pos_x, xData.length, DPI_WIDTH)) {
+      if (_utils.isOver(proxy.mouse, pos_x, data.length, DPI_WIDTH)) {
+        console.log(`over x = ${pos_x}`);
         ctx.save();
         // ctx.strokeStyle = '#96a2aa'
         ctx.moveTo(pos_x, PADDING);
         ctx.lineTo(pos_x, DPI_HEIGHT - PADDING);
         ctx.restore();
         tip.show(proxy.mouse.tooltip, {
-          title: _utils.toDate(xData[i]),
-          items: yData.map(col => {
-            return {
-              color: data.colors[col[0]],
-              name: data.names[col[0]],
-              value: col[i + 1]
-            };
-          })
+          title: _utils.toDate(data[i]),
+          items: []
         });
       }
     }
@@ -773,4 +768,4 @@ function tooltip(el) {
 
 },{"./utils":"3EQWo","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}]},["12yWF","5XPnV"], "5XPnV", "parcelRequireb826")
 
-//# sourceMappingURL=index.72166a09.js.map
+//# sourceMappingURL=index.HASH_REF_c75227167347e57df55b258c72166a09.js.map

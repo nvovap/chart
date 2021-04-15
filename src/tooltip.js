@@ -13,7 +13,7 @@ const template = (data) => `
 `
 
 export function tooltip(el) {
-    const clear = () => el.innertHTML = ''
+    const clear = () => el.innerHTML = ''
     return {
         show({left, top}, data) {
             const { height, width } = el.getBoundingClientRect()

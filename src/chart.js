@@ -1,5 +1,6 @@
-import { line, circle, toDate, isOver, computeBounderies, css } from './utils'
+import { toCoords, line, circle, toDate, isOver, computeBounderies, css } from './utils'
 import { tooltip } from './tooltip'
+import { sliderChart } from './slider'
 
 const PADDING = 40
 
@@ -14,12 +15,14 @@ const VIEW_WIDTH = DPI_WIDTH
 const ROWS_COUNT = 5
 
 
+
+
 export function chart(root, data) {
 
   let raf
-  const canvas = root.querySelector('canvas')
+  const canvas = root.querySelector('[data-el="main"]')
   const tip = tooltip(root.querySelector('[data-el="tooltip"]'))
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d")
 
   canvas.style.width = WIDTH + 'px'
   canvas.style.height = HEIGHT + 'px'
@@ -33,22 +36,12 @@ export function chart(root, data) {
   canvas.height = DPI_HEIGHT
 
   canvas.addEventListener("mousemove", mousemove)
-
   canvas.addEventListener("mouseleave", mouseleave)
 
   function mouseleave() {
     proxy.mouse = null
     tip.hide()
   }
-
-
-  const proxy = new Proxy({}, {
-    set(...args) {
-      const result = Reflect.set(...args)
-      raf = requestAnimationFrame(paint)
-      return result;
-    }
-  })
 
   function mousemove({ clientX, clientY }) {
     const { left, top } = canvas.getBoundingClientRect()
@@ -61,6 +54,20 @@ export function chart(root, data) {
     }
   }
 
+
+
+  const slider = sliderChart(root.querySelector('[data-el="slider"]'), data, DPI_WIDTH)
+
+
+  const proxy = new Proxy({}, {
+    set(...args) {
+      const result = Reflect.set(...args)
+      raf = requestAnimationFrame(paint)
+      return result;
+    }
+  })
+
+  
   function clear() {
     ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT)
   }
@@ -79,7 +86,7 @@ export function chart(root, data) {
     yAxis(yMin, yMax)
     xAxis(xData, yData, xRatio)
 
-    yData.map(toCoords(xRatio, yRatio)).forEach((coords, indx) => {
+    yData.map(toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING)).forEach((coords, indx) => {
       const name = yData[indx][0];
       const color = data.colors[name]
       line(ctx, coords, { color })
@@ -93,12 +100,7 @@ export function chart(root, data) {
     })
   }
 
-  function toCoords(xRatio, yRatio) {
-    return (col) => col.filter((_, i) => i !== 0).map((y, i) => [
-      Math.floor(i * xRatio),
-      Math.floor(DPI_HEIGHT - PADDING - y * yRatio)
-    ])
-  }
+  
 
   function xAxis(xData, yData, xRatio) {
     const colsCount = 10

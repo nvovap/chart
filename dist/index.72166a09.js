@@ -523,6 +523,7 @@ _parcelHelpers.export(exports, "chart", function () {
 });
 var _utils = require('./utils');
 var _tooltip = require('./tooltip');
+var _slider = require('./slider');
 const PADDING = 40;
 const WIDTH = 600;
 const HEIGHT = 200;
@@ -533,7 +534,7 @@ const VIEW_WIDTH = DPI_WIDTH;
 const ROWS_COUNT = 5;
 function chart(root, data) {
   let raf;
-  const canvas = root.querySelector('canvas');
+  const canvas = root.querySelector('[data-el="main"]');
   const tip = _tooltip.tooltip(root.querySelector('[data-el="tooltip"]'));
   const ctx = canvas.getContext("2d");
   canvas.style.width = WIDTH + 'px';
@@ -550,13 +551,6 @@ function chart(root, data) {
     proxy.mouse = null;
     tip.hide();
   }
-  const proxy = new Proxy({}, {
-    set(...args) {
-      const result = Reflect.set(...args);
-      raf = requestAnimationFrame(paint);
-      return result;
-    }
-  });
   function mousemove({clientX, clientY}) {
     const {left, top} = canvas.getBoundingClientRect();
     proxy.mouse = {
@@ -567,6 +561,14 @@ function chart(root, data) {
       }
     };
   }
+  const slider = _slider.sliderChart(root.querySelector('[data-el="slider"]'), data, DPI_WIDTH);
+  const proxy = new Proxy({}, {
+    set(...args) {
+      const result = Reflect.set(...args);
+      raf = requestAnimationFrame(paint);
+      return result;
+    }
+  });
   function clear() {
     ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT);
   }
@@ -580,7 +582,7 @@ function chart(root, data) {
     // Painting
     yAxis(yMin, yMax);
     xAxis(xData, yData, xRatio);
-    yData.map(toCoords(xRatio, yRatio)).forEach((coords, indx) => {
+    yData.map(_utils.toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING)).forEach((coords, indx) => {
       const name = yData[indx][0];
       const color = data.colors[name];
       _utils.line(ctx, coords, {
@@ -593,9 +595,6 @@ function chart(root, data) {
         }
       }
     });
-  }
-  function toCoords(xRatio, yRatio) {
-    return col => col.filter((_, i) => i !== 0).map((y, i) => [Math.floor(i * xRatio), Math.floor(DPI_HEIGHT - PADDING - y * yRatio)]);
   }
   function xAxis(xData, yData, xRatio) {
     const colsCount = 10;
@@ -661,7 +660,7 @@ function chart(root, data) {
   };
 }
 
-},{"./utils":"3EQWo","./tooltip":"1RUfP","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"3EQWo":[function(require,module,exports) {
+},{"./utils":"3EQWo","./tooltip":"1RUfP","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","./slider":"6zrPB"}],"3EQWo":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 _parcelHelpers.export(exports, "toDate", function () {
@@ -681,6 +680,9 @@ _parcelHelpers.export(exports, "line", function () {
 });
 _parcelHelpers.export(exports, "css", function () {
   return css;
+});
+_parcelHelpers.export(exports, "toCoords", function () {
+  return toCoords;
 });
 const CIRCLE_RADIUS = 10;
 function toDate(timestamp) {
@@ -731,6 +733,9 @@ function line(ctx, coords, {color}) {
 function css(el, styles = {}) {
   Object.assign(el.style, styles);
 }
+function toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING = 0) {
+  return col => col.filter((_, i) => i !== 0).map((y, i) => [Math.floor(i * xRatio), Math.floor(DPI_HEIGHT - PADDING - y * yRatio)]);
+}
 
 },{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"1RUfP":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
@@ -769,6 +774,46 @@ function tooltip(el) {
       });
     }
   };
+}
+
+},{"./utils":"3EQWo","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"6zrPB":[function(require,module,exports) {
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+_parcelHelpers.export(exports, "sliderChart", function () {
+  return sliderChart;
+});
+var _utils = require('./utils');
+const HEIGHT = 40;
+const DPI_HEIGHT = HEIGHT * 2;
+function sliderChart(root, data, DPI_WIDTH) {
+  const WIDTH = DPI_WIDTH / 2;
+  const VIEW_WIDTH = DPI_WIDTH;
+  const VIEW_HEIGHT = DPI_HEIGHT;
+  const canvas = root.querySelector('canvas');
+  const ctx = canvas.getContext("2d");
+  canvas.style.width = WIDTH + 'px';
+  canvas.style.height = HEIGHT + 'px';
+  _utils.css(canvas, {
+    width: WIDTH + 'px',
+    height: HEIGHT + 'px'
+  });
+  canvas.width = DPI_WIDTH;
+  canvas.height = DPI_HEIGHT;
+  const [yMin, yMax] = _utils.computeBounderies(data);
+  const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+  const yRatio = VIEW_HEIGHT / (yMax - yMin);
+  xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+  yData = data.columns.filter(col => data.types[col[0]] === 'line');
+  // Painting
+  // yAxis(yMin, yMax)
+  // xAxis(xData, yData, xRatio)
+  yData.map(_utils.toCoords(xRatio, yRatio, DPI_HEIGHT, -5)).forEach((coords, indx) => {
+    const name = yData[indx][0];
+    const color = data.colors[name];
+    _utils.line(ctx, coords, {
+      color
+    });
+  });
 }
 
 },{"./utils":"3EQWo","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}]},["12yWF","5XPnV"], "5XPnV", "parcelRequireb826")

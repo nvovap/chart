@@ -75,3 +75,11 @@ export function line(ctx, coords, { color }) {
 export function css(el, styles = {}) {
     Object.assign(el.style, styles)
 }
+
+
+export function toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING = 0) {
+    return (col) => col.filter((_, i) => i !== 0).map((y, i) => [
+      Math.floor(i * xRatio),
+      Math.floor(DPI_HEIGHT - PADDING - y * yRatio)
+    ])
+  }

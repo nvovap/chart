@@ -1,4 +1,4 @@
-import { toCoords, line, circle, toDate, isOver, computeBounderies, css } from './utils'
+import { toCoords, line, circle, toDate, isOver, computeBounderies, css, computeXRatio, computeYRatio } from './utils'
 import { tooltip } from './tooltip'
 import { sliderChart } from './slider'
 
@@ -14,12 +14,15 @@ const VIEW_WIDTH = DPI_WIDTH
 
 const ROWS_COUNT = 5
 
+const SPEED = 3000
+
 
 
 
 export function chart(root, data) {
 
   let raf
+  // let prevMax
   const canvas = root.querySelector('[data-el="main"]')
   const tip = tooltip(root.querySelector('[data-el="tooltip"]'))
   const ctx = canvas.getContext("2d")
@@ -67,26 +70,74 @@ export function chart(root, data) {
     }
   })
 
+  slider.subscribe(pos => {
+    proxy.pos = pos
+  })
   
   function clear() {
     ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT)
   }
 
+/*
+  function getMax(yMax) {
+    const step = Math.round((yMax - prevMax) / SPEED)
+
+    if (proxy.max < yMax) {
+      proxy.max += step
+    } else if (proxy.max > yMax) {
+      proxy.max = yMax
+      prevMax = yMax
+    }
+
+    return proxy.max
+  }
+  */
+
+
+  function translateX(length, xRatio, left) {
+    return -1 * Math.round((left * length * xRatio) / 100)
+  }
+
   function paint() {
     clear()
 
-    const [yMin, yMax] = computeBounderies(data)
-    const xRatio = VIEW_WIDTH / (data.columns[0].length - 2)
-    const yRatio = VIEW_HEIGHT / (yMax - yMin)
+    const length = data.columns[0].length
+    const leftIndex  = Math.round(length * proxy.pos[0] / 100)
+    const rightIndex = Math.round(length * proxy.pos[1] / 100)
 
-    xData = data.columns.filter((col) => data.types[col[0]] !== 'line')[0]
-    yData = data.columns.filter((col) => data.types[col[0]] === 'line')
+    const columns = data.columns.map(el => {
+      res = el.slice(leftIndex, rightIndex)
 
-    // Painting
-    yAxis(yMin, yMax)
+      if (typeof res[0] !== 'string') {
+        res.unshift(el[0])
+      }
+
+      return res
+    })
+
+    const [yMin, yMax] = computeBounderies({columns, types: data.types})
+
+
+    // if (!prevMax) {
+    //  prevMax = yMax
+    //  proxy.max = yMax
+    // }
+
+    // const max = getMax(yMax)
+
+    const xRatio = computeXRatio(VIEW_WIDTH, columns[0].length)
+    const yRatio = computeYRatio(VIEW_HEIGHT, yMax, yMin)
+
+    // const translate = translateX(data.columns[0].length, xRatio, proxy.pos[0])
+
+    const xData = columns.filter((col) => data.types[col[0]] !== 'line')[0]
+    const yData = columns.filter((col) => data.types[col[0]] === 'line')
+
+    
+    yAxis(yMin, yMax) 
     xAxis(xData, yData, xRatio)
 
-    yData.map(toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING)).forEach((coords, indx) => {
+    yData.map(toCoords(xRatio, yRatio, DPI_HEIGHT, yMin, PADDING)).forEach((coords, indx) => {
       const name = yData[indx][0];
       const color = data.colors[name]
       line(ctx, coords, { color })

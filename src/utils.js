@@ -55,20 +55,24 @@ export function circle(ctx, [x, y], color) {
     ctx.beginPath()
     ctx.strokeStyle = color
     ctx.fillStyle = '#fff'
+    ctx.lineWidth = 4
     ctx.arc(x, y, CIRCLE_RADIUS, 0, Math.PI * 2)
     ctx.fill()
     ctx.stroke()
     ctx.closePath()
 }
 
-export function line(ctx, coords, { color }) {
+export function line(ctx, coords, { color, translate = 0 }) {
     ctx.beginPath()
+    ctx.save()
     ctx.lineWidth = 4
+    ctx.translate(translate, 0)
     ctx.strokeStyle = color
     for ([x, y] of coords) {
-        ctx.lineTo(x, y);
+        ctx.lineTo(x, y)
     }
     ctx.stroke()
+    ctx.restore()
     ctx.closePath()
 }
 
@@ -77,9 +81,17 @@ export function css(el, styles = {}) {
 }
 
 
-export function toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING = 0) {
+export function toCoords(xRatio, yRatio, DPI_HEIGHT, yMin, PADDING = 0) {
     return (col) => col.filter((_, i) => i !== 0).map((y, i) => [
-      Math.floor(i * xRatio),
-      Math.floor(DPI_HEIGHT - PADDING - y * yRatio)
+        Math.floor(i * xRatio),
+        Math.floor(DPI_HEIGHT - PADDING - (y - yMin) / yRatio)
     ])
-  }
+}
+
+export function computeXRatio(width, length) {
+    return width / (length - 2)
+}
+
+export function computeYRatio(height, max, min) {
+    return  (max - min) / height
+}
